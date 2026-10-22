@@ -1,0 +1,540 @@
+/*
+ * The instrument that reads the sheet.
+ *
+ * This panel used to imitate the marginal legend of a swisstopo 1:25'000 sheet.
+ * That metaphor belongs to the map view, where the tiles genuinely ARE the
+ * national map — here it was costume: paper's low dynamic range simulated on an
+ * emissive display, every group framed like a printed legend, labels shouting in
+ * sub-10px uppercase. The result read as 2012 software in a 1962 coat.
+ *
+ * The popup is not a map. It is the readout that answers two questions: is this
+ * the right route, and what exactly will be in the file? So it is built like an
+ * instrument — the measurements are the largest thing on screen, structure comes
+ * from alignment rather than borders, and colour is signal rather than paint.
+ *
+ * Everything is set in one monospace face. The numerals always were — they are
+ * measurements — and the labels have now joined them, because a proportional
+ * face for the chrome was the last thing pretending this is a document rather
+ * than a readout.
+ */
+
+@font-face {
+  font-family: 'Spline Sans Mono';
+  src: url('../fonts/spline-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Spline Sans Mono';
+  src: url('../fonts/spline-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Spline Sans Mono';
+  src: url('../fonts/spline-mono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* Neutrals graded for a screen. The old ramp sat inside a ~15% luminance
+     band in one warm hue, which is what made the panel look like a scan.
+     Warmth now lives in the content — bister profile, red route — not the
+     chrome. */
+  --paper: #fcfcfa;
+  --paper-sunk: #f0f0ec;
+  --ink: #16171a;
+  --ink-soft: #63656b;
+  --rule: #dcdcd6;
+  --rule-hair: #ebebe6;
+
+  /* The interface primary. Deliberately a deep indigo rather than the azure
+     used for ski routes: a blue button and a blue route line must not read as
+     the same element. White on this measures 8.04:1. */
+  --brand: #1a46b8;
+  --brand-lo: #14368f;
+  --brand-ink: #1a46b8;     /* the same hue as text, on paper */
+
+  /* Route geometry is no longer a fixed colour — it comes from the route's
+     discipline (lib/disciplines.js) and is set as --route per route. This is
+     only the fallback for a route with no discipline. */
+  --route: #d12b1f;
+
+  --warn: #b8241a;          /* a number that needs caution; 6.19:1 on paper */
+
+  --bister: #b08d57;
+  --bister-deep: #8a6a3b;
+  --glacier: #a9c6d8;
+
+  /* Five type steps. There were ten, six of which differed by half a pixel —
+     that is one level plus noise, not a hierarchy. */
+  --t-xs: 11px;
+  --t-sm: 12px;
+  --t-base: 13px;
+  --t-num: 16px;
+  --t-title: 19px;
+
+
+  /* One mono for everything — labels, prose and measurements alike. The panel
+     is an instrument readout, and a proportional face for the labels was the
+     last thing pretending otherwise. */
+  --font-label: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-num: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Rounding, applied once so every control agrees. */
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #16181c;
+    --paper-sunk: #1e2126;
+    --ink: #ece9e3;
+    --ink-soft: #969aa3;
+    --rule: #343941;
+    --rule-hair: #23272d;
+
+    /* Lifted for the dark ground; white on this is 4.65:1. */
+    --brand: #2f6fe4;
+    --brand-lo: #2559c4;
+    --brand-ink: #74a6ff;
+    --route: #ff5a4a;
+    --warn: #ff6a5e;
+
+    --bister: #c9a068;
+    --bister-deep: #8f7245;
+    --glacier: #5d8299;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 360px;
+  margin: 0;
+  padding: 0 0 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-label);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 18px 8px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.sheet-head h1 {
+  margin: 0;
+  font-size: var(--t-base);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sheet-head h1 span {
+  color: var(--brand-ink);
+  margin-left: 0.35em;
+}
+
+.sheet-head__meta {
+  margin: 0;
+  font-family: var(--font-num);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------- states */
+
+.state {
+  padding: 30px 18px;
+  text-align: center;
+}
+
+.state__line {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: var(--t-base);
+  letter-spacing: 0.02em;
+}
+
+.state__hint {
+  margin: 0;
+  font-size: var(--t-base);
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------- route */
+
+#state-route { padding: 12px 18px 0; }
+
+.route__destination {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.route__title {
+  margin: 2px 0 10px;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+/* The map and profile plates: framed like a figure on a printed sheet. */
+
+/* No frame. Seven identically-bordered boxes meant no border carried any
+ * information; the plates are distinguished by their sunk ground alone. */
+.plate {
+  position: relative;
+  margin: 0 0 10px;
+  padding: 0;
+  background: var(--paper-sunk);
+  border: none;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Chrome caps a popup at 600px before it scrolls, and the export button must
+ * never fall below that fold. The preview plates were sized when this panel
+ * was the only place to look at the route; now that the map view exists for
+ * inspection, they only have to answer "is this the right route?". */
+/* Real terrain behind the line, so the preview reads as a place rather than a
+ * shape floating in an empty box. Held well back — desaturated and dimmed —
+ * because the route, not the map, is the subject of this panel. */
+.plate__tiles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  overflow: hidden;
+  background: var(--paper-sunk);
+  /* Opacity belongs on the container, not on each tile: per-tile alpha makes
+     adjacent edges blend twice and draws a visible seam grid. */
+  opacity: 0.62;
+}
+
+.plate__tiles img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  filter: contrast(1.05);
+  user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Inverted and re-hued so pale map paper becomes dark ground without
+     dragging the whole panel toward grey. */
+  .plate__tiles { opacity: 0.4; }
+  .plate__tiles img { filter: invert(1) contrast(0.9); }
+}
+
+.plate__map { display: block; position: relative; width: 100%; height: 150px; }
+.plate__profile { display: block; width: 100%; height: 42px; }
+
+.plate__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 9px 6px;
+  border-top: 1px solid var(--rule-hair);
+  font-family: var(--font-num);
+  font-size: var(--t-xs);
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+
+
+/* -------------------------------------------------------------------- facts */
+
+/* The measurements are the point of this panel, so they are the largest
+ * non-title thing on it. Separation by space and one hairline, not by a grid
+ * of bordered cells. */
+.facts {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 9px 0 0;
+  border-top: 1px solid var(--rule);
+}
+
+.facts > div { margin: 0; }
+
+.facts dt {
+  margin: 0 0 2px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+
+.facts dd {
+  margin: 0;
+  font-family: var(--font-num);
+  font-size: var(--t-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.facts dd.is-pending { color: var(--ink-soft); }
+.facts dd.is-warn { color: var(--warn); }
+
+/* ------------------------------------------------------------------- export */
+
+/* One filled surface in the whole panel. The offset "stamp" shadow and the
+ * translate-on-press are gone: they read as a 2021 sticker, and they
+ * contradicted this file's own claim that a printed sheet has no shadows. A
+ * colour step is how a physical control acknowledges you. */
+.export {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 11px 14px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: #fff;
+  font-family: var(--font-label);
+  font-size: var(--t-base);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 90ms linear;
+}
+
+.export:hover:not(:disabled) { background: var(--brand-lo); }
+.export:active:not(:disabled) { background: var(--brand-lo); }
+.export:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.export:disabled { background: var(--rule); color: var(--ink-soft); cursor: default; }
+
+
+.footnote {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule-hair);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export { transition: none; }
+}
+
+/* ------------------------------------------------- drawn geometry (SVG) ---
+ * Set here rather than as presentation attributes, because SVG attributes do
+ * not resolve var() — the theme tokens only reach the drawing through CSS.
+ */
+
+.route-line {
+  fill: none;
+  stroke: var(--route);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Alternatives are set apart by colour and weight. The dash is not available
+ * for the job: on this map it carries the SAC terrain notation. */
+.route-line--variant {
+  stroke: var(--bister-deep);
+  stroke-width: 1.6;
+}
+
+/* SAC line-style notation, at the preview's lighter weight. */
+.route-line--dashed { stroke-dasharray: 7.2 3.6; stroke-linecap: butt; }
+.route-line--dotted { stroke-dasharray: 0 4.4; stroke-linecap: round; }
+
+.waypoint {
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.waypoint--start {
+  fill: var(--paper);
+}
+
+.profile-area {
+  fill: var(--bister);
+  fill-opacity: 0.28;
+  stroke: none;
+}
+
+/* Over the dark ground, 0.28 bister stops reading as terrain and becomes a
+   muddy brown slab. */
+@media (prefers-color-scheme: dark) {
+  .profile-area { fill-opacity: 0.18; }
+}
+
+.profile-line {
+  fill: none;
+  stroke: var(--bister-deep);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ------------------------------------------------------------- devices ---
+ * A segmented control rather than a <select>: there are three options, the
+ * choice changes what the file contains, and it should be legible without
+ * opening anything.
+ */
+
+.devices {
+  margin: 0 0 10px;
+  padding: 0;
+  border: none;
+}
+
+.devices legend {
+  padding: 0 0 5px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+
+.devices__options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+/* State is expressed by fill only — never by border weight — so the three
+ * interactive species in this panel read as one family. */
+.device {
+  padding: 7px 4px 6px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-label);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.device:hover:not([aria-pressed='true']) { background: var(--paper-sunk); }
+
+.device[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.device:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+
+/* Reserved space, reused for the post-export confirmation so that telling the
+ * user the file was written costs no vertical budget at all. */
+.devices__hint {
+  margin: 5px 0 0;
+  min-height: 1.5em;
+  font-size: var(--t-xs);
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.devices__hint.is-done { color: var(--ink); }
+.devices__hint.is-done b { color: var(--ink); }
+
+.devices__hint b {
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------- secondary ---- */
+
+.secondary {
+  display: block;
+  width: auto;
+  margin: 10px auto 0;
+  padding: 8px 14px 7px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-label);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.secondary:hover { background: var(--paper-sunk); }
+.secondary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+
+
+
+/* ------------------------------------------------- map preview affordance ---
+ * The preview doubles as the control that opens the full map view. A
+ * transparent button covers the plate so the whole thing is one target, while
+ * the caption carries the cue.
+ */
+
+.plate--interactive { cursor: pointer; }
+
+.plate__open {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.plate__open:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+
+/* The plate used to be a transparent button whose only cue was small red text
+ * in the caption — undiscoverable. The cue is now a visible control, with the
+ * whole plate still clickable behind it. */
+/* A swatch in the route's own colour, so the caption explains the line rather
+ * than just labelling the projection. */
+.plate__key {
+  flex: none;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--route);
+}
+
+#map-caption-text { flex: 1; }
+
+.plate__cue {
+  flex: none;
+  padding: 3px 8px 2px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-label);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.plate--interactive:hover .plate__cue { background: var(--ink); color: var(--paper); }

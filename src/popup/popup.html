@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SAC GPX</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="sheet-head">
+      <h1>SAC<span>GPX</span></h1>
+      <p class="sheet-head__meta" id="sheet-id">—</p>
+    </header>
+
+    <main id="main">
+      <!-- Loading -->
+      <section class="state" id="state-loading">
+        <p class="state__line">Reading route…</p>
+      </section>
+
+      <!-- Not a route page -->
+      <section class="state" id="state-idle" hidden>
+        <p class="state__line">No route on this page.</p>
+        <p class="state__hint">
+          Open a route in the SAC Route Portal, then reopen this panel.
+        </p>
+      </section>
+
+      <!-- Members-only / no geometry -->
+      <section class="state" id="state-gated" hidden>
+        <p class="state__line">Route locked</p>
+        <p class="state__hint" id="gated-hint"></p>
+      </section>
+
+      <!-- Error -->
+      <section class="state" id="state-error" hidden>
+        <p class="state__line">Couldn’t read the route</p>
+        <p class="state__hint" id="error-hint"></p>
+        <button class="secondary" id="retry" type="button">Try again</button>
+      </section>
+
+      <!-- Route -->
+      <section id="state-route" hidden>
+        <h2 class="route__destination" id="route-destination"></h2>
+        <p class="route__title" id="route-title"></p>
+
+        <figure class="plate plate--interactive">
+          <button class="plate__open" id="view-map" type="button"
+                  aria-label="Open this route on the swisstopo map"></button>
+          <div class="plate__tiles" id="map-tiles" aria-hidden="true"></div>
+          <svg
+            class="plate__map"
+            id="map"
+            viewBox="0 0 320 190"
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-labelledby="map-caption"
+          ></svg>
+          <span class="plate__tick plate__tick--tl" aria-hidden="true"></span>
+          <span class="plate__tick plate__tick--tr" aria-hidden="true"></span>
+          <span class="plate__tick plate__tick--bl" aria-hidden="true"></span>
+          <span class="plate__tick plate__tick--br" aria-hidden="true"></span>
+          <figcaption id="map-caption" class="plate__caption">
+            <span class="plate__key" aria-hidden="true"></span>
+            <span id="map-caption-text">north up</span>
+            <span class="plate__cue">Open map ↗</span>
+          </figcaption>
+        </figure>
+
+        <figure class="plate plate--profile">
+          <svg
+            class="plate__profile"
+            id="profile"
+            viewBox="0 0 320 74"
+            preserveAspectRatio="none"
+            role="img"
+            aria-labelledby="profile-caption"
+          ></svg>
+          <figcaption id="profile-caption" class="plate__caption">
+            <span id="profile-status">Sampling terrain…</span>
+          </figcaption>
+        </figure>
+
+        <dl class="facts" id="facts"></dl>
+
+        <p class="devices__hint" id="device-hint"></p>
+
+        <button class="export" id="export" type="button">
+          <span class="export__label">Export GPX</span>
+        </button>
+
+        <p class="footnote">Conditions change — verify against the current SAC route description.</p>
+      </section>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

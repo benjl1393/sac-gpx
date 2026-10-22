@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SAC GPX — Map</title>
+    <link rel="stylesheet" href="map.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="bar__identity">
+        <span class="bar__mark">SAC<span>GPX</span></span>
+        <h1 id="route-name">Loading…</h1>
+      </div>
+      <div class="bar__layers">
+        <div class="switcher" id="base-layers" role="radiogroup" aria-label="Base map"></div>
+        <div class="overlays" id="overlay-layers" role="group" aria-label="Overlays"></div>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <div class="tiles" id="tiles" aria-hidden="true"></div>
+      <svg class="overlay" id="overlay" aria-label="Route overlay"></svg>
+      <p class="stage__empty" id="empty" hidden>
+        No route loaded. Open a route in the SAC Route Portal and choose
+        “View on map”.
+      </p>
+      <dl class="info" id="info" aria-label="Route summary"></dl>
+      <div class="mapctl" id="controls" role="group" aria-label="Map controls"></div>
+      <div class="legends">
+        <div class="legend" id="notation" hidden>
+          <span class="legend__title">Terrain</span>
+          <ul class="legend__bands" id="notation-keys"></ul>
+        </div>
+        <div class="legend" id="legend" hidden>
+          <span class="legend__title">Slope</span>
+          <ul class="legend__bands" id="legend-bands"></ul>
+        </div>
+      </div>
+      <div class="scale" id="scale"><span id="scale-label">—</span></div>
+      <p class="attribution" id="attribution"></p>
+    </main>
+
+
+    <script type="module" src="map.js"></script>
+  </body>
+</html>

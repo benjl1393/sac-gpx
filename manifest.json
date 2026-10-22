@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "SAC GPX",
+  "version": "0.1.0",
+  "description": "Export SAC Route Portal routes as GPX, with elevation restored from swisstopo terrain data.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "SAC GPX",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.sac-cas.ch/*"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "https://www.sac-cas.ch/*",
+    "https://api3.geo.admin.ch/*"
+  ],
+  "permissions": ["storage"],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/lib/*.js", "src/fonts/*.woff2"],
+      "matches": ["https://www.sac-cas.ch/*"]
+    }
+  ]
+}

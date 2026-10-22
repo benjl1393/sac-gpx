@@ -1,0 +1,12 @@
+{
+  "name": "sac-gpx",
+  "version": "0.1.0",
+  "description": "Export SAC Route Portal routes as elevation-enriched GPX",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test 'test/*.test.mjs'",
+    "check": "node --test 'test/*.test.mjs'"
+  },
+  "license": "MIT"
+}

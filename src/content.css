@@ -1,0 +1,105 @@
+/*
+ * The in-page export control.
+ *
+ * Styled as a map-sheet stamp rather than a web button: square corners, a
+ * hairline rule, condensed lettering and the red swisstopo prints routes in.
+ * Everything is namespaced and !important-free except where the portal's own
+ * cascade would otherwise reach in — this element lives in someone else's page.
+ */
+
+@font-face {
+  font-family: 'SAC GPX Mono';
+  src: url('fonts/spline-mono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+#sac-gpx-export-button.sac-gpx-button {
+  --brand: #1a46b8;
+  --lk-ink: #16171a;
+  --lk-paper: #fcfcfa;
+
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2147483000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0;
+  padding: 11px 16px 10px;
+  border: 1px solid var(--lk-ink);
+  border-radius: 8px;
+  background: var(--lk-paper);
+  box-shadow: 3px 3px 0 rgba(26, 24, 21, 0.9);
+
+  font-family: 'SAC GPX Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--lk-ink);
+
+  cursor: pointer;
+  transition: transform 90ms linear, box-shadow 90ms linear;
+}
+
+#sac-gpx-export-button.sac-gpx-button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 rgba(26, 24, 21, 0.9);
+}
+
+#sac-gpx-export-button.sac-gpx-button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 rgba(26, 24, 21, 0.9);
+}
+
+#sac-gpx-export-button.sac-gpx-button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* A route line fragment, drawn the way the national map draws one. */
+#sac-gpx-export-button .sac-gpx-button__mark {
+  width: 22px;
+  height: 12px;
+  background-image: linear-gradient(
+    to right,
+    var(--brand) 0 5px,
+    transparent 5px 8px,
+    var(--brand) 8px 13px,
+    transparent 13px 16px,
+    var(--brand) 16px 22px
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 3px;
+}
+
+#sac-gpx-export-button[data-busy='1'] .sac-gpx-button__mark {
+  animation: sac-gpx-survey 900ms linear infinite;
+}
+
+@keyframes sac-gpx-survey {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sac-gpx-export-button.sac-gpx-button,
+  #sac-gpx-export-button .sac-gpx-button__mark {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  #sac-gpx-export-button.sac-gpx-button {
+    --lk-ink: #e8e4dc;
+    --lk-paper: #1c1f24;
+    --brand: #4a8bff;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8);
+  }
+}

@@ -1,0 +1,4 @@
+node_modules/
+.scratch/
+*.gpx
+.DS_Store
